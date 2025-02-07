@@ -3,30 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connect</title>
+    <title>bluetooth B</title>
 </head>
 <body>
+
     <script>
-        console.log('lol')
-        const urlParams = new URLSearchParams(window.location.search);
-        const offer = urlParams.get('offer')
+        // Receptor - Dispositivo B (también emisor)
+        let server;
+        let characteristicToSend;
+        let characteristicToReceive;
 
-        let peer = new RTCPeerConnection();
+        async function connectToBluetoothDevice() {
+            try {
+                // Solicitar al usuario que seleccione un dispositivo Bluetooth
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['12345678-1234-5678-1234-56789abcdef0'] // Servicio personalizado
+                });
 
-        peer.ondatachannel = (event) => {
-            let canal = event.channel;
-            canal.onmessage = (msg) => {
-                alert("Mensaje recibido: " + msg.data);
-            };
-            canal.send("Hola, dispositivo A!");
-        };
+                // Conectarse al servicio del dispositivo seleccionado
+                server = await device.gatt.connect();
+                console.log("Conectado al Dispositivo A: ", device.name);
 
-        peer.setRemoteDescription(new RTCSessionDescription(JSON.parse(offer)));
+                // Obtener las características del servicio para enviar y recibir datos
+                const service = await server.getPrimaryService('12345678-1234-5678-1234-56789abcdef0');
+                characteristicToSend = await service.getCharacteristic('12345678-1234-5678-1234-56789abcde01');
+                characteristicToReceive = await service.getCharacteristic('12345678-1234-5678-1234-56789abcde02');
 
-        peer.createAnswer().then(answer => {
-            peer.setLocalDescription(answer);
-            console.log("Envía esta respuesta al otro dispositivo:", JSON.stringify(answer));
-        });
+                // Iniciar la lectura de datos de Dispositivo A
+                characteristicToReceive.startNotifications();
+                characteristicToReceive.addEventListener('characteristicvaluechanged', handleReceivedData);
+
+            } catch (error) {
+                console.error("Error al conectar al Dispositivo A: ", error);
+            }
+        }
+
+        // Enviar un mensaje a Dispositivo A
+        async function sendMessageToDevice(message) {
+            if (characteristicToSend) {
+                const encoder = new TextEncoder();
+                const encodedMessage = encoder.encode(message);
+                await characteristicToSend.writeValue(encodedMessage);
+                console.log("Enviado a Dispositivo A: ", message);
+            } else {
+                console.log("No hay conexión para enviar datos.");
+            }
+        }
+
+        // Manejar los datos recibidos desde Dispositivo A
+        function handleReceivedData(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder();
+            const decodedMessage = decoder.decode(value);
+            console.log("Recibido de Dispositivo A: ", decodedMessage);
+
+            // Responder a Dispositivo A
+            sendMessageToDevice("¡Hola desde el Dispositivo B!");
+        }
+
+        window.onclick = () => {
+            connectToBluetoothDevice();
+        }
+
     </script>
 </body>
 </html>
