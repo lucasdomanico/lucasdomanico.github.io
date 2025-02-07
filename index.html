@@ -1,44 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC QR</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Handshake</title>
 </head>
 <body>
-    <h2>Escanea este QR en otro dispositivo</h2>
-    <div id="qrcode"></div>
-    <textarea id="answerInput" placeholder="Pega aquí la respuesta"></textarea>
-    <button id="connectBtn">Conectar</button>
-
     <script>
-        let peer = new RTCPeerConnection();
-        let dataChannel = peer.createDataChannel("canalDatos");
-
-        dataChannel.onopen = () => {
-            console.log("¡Conexión establecida!");
-            dataChannel.send("Hola desde el QR");
-        };
-
-        dataChannel.onmessage = (event) => {
-            alert("Mensaje recibido: " + event.data);
-        };
-
-        peer.createOffer().then(offer => {
-            peer.setLocalDescription(offer);
-            let qrData = JSON.stringify(offer);
-            // let handshake_hash = 'https://gist.github.com/lucasdomanico/697af0f8eb5ae53317fc50853383c510'
-
-            let handshake = 'https://gist.githubusercontent.com/lucasdomanico/91e5e9bdc7637285b4ecf8109bc2d80f/raw/index.html'
-
-            new QRCode(document.getElementById("qrcode"), handshake);
-        });
-
-        document.getElementById("connectBtn").addEventListener("click", () => {
-            let answer = document.getElementById("answerInput").value;
-            peer.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
-        });
+        alert(location.href)
     </script>
 </body>
 </html>
