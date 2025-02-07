@@ -3,69 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>bluetooth B</title>
+    <title>Dispositivo B (Receptor)</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 </head>
 <body>
+    <h1>Dispositivo B</h1>
+    <button onclick="connect()">Conectar</button>
 
     <script>
-        // Receptor - Dispositivo B (también emisor)
-        let server;
-        let characteristicToSend;
-        let characteristicToReceive;
+        let urlParams = new URLSearchParams(window.location.search);
+        let callId = urlParams.get("id");
 
-        async function connectToBluetoothDevice() {
-            try {
-                // Solicitar al usuario que seleccione un dispositivo Bluetooth
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['12345678-1234-5678-1234-56789abcdef0'] // Servicio personalizado
-                });
+        let apiKey = urlParams.get('apiKey')
+        let projectId = urlParams.get('projectId')
 
-                // Conectarse al servicio del dispositivo seleccionado
-                server = await device.gatt.connect();
-                console.log("Conectado al Dispositivo A: ", device.name);
+        // 🔥 Configuración de Firebase
+        const firebaseConfig = {
+            apiKey,
+            authDomain: projectId + ".firebaseapp.com",
+            databaseURL: "https://" + projectId + ".firebaseio.com",
+            projectId
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-                // Obtener las características del servicio para enviar y recibir datos
-                const service = await server.getPrimaryService('12345678-1234-5678-1234-56789abcdef0');
-                characteristicToSend = await service.getCharacteristic('12345678-1234-5678-1234-56789abcde01');
-                characteristicToReceive = await service.getCharacteristic('12345678-1234-5678-1234-56789abcde02');
+        let peerConnection;
 
-                // Iniciar la lectura de datos de Dispositivo A
-                characteristicToReceive.startNotifications();
-                characteristicToReceive.addEventListener('characteristicvaluechanged', handleReceivedData);
-
-            } catch (error) {
-                console.error("Error al conectar al Dispositivo A: ", error);
+        function connect() {
+            if (!callId) {
+                alert("No se encontró el ID de la llamada.");
+                return;
             }
+
+            peerConnection = new RTCPeerConnection();
+
+            // Escuchar oferta del Dispositivo A
+            db.ref("calls/" + callId + "/offer").once("value", snapshot => {
+                if (snapshot.exists()) {
+                    let offer = snapshot.val();
+                    peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+                    // Crear respuesta (answer)
+                    peerConnection.createAnswer().then(answer => {
+                        peerConnection.setLocalDescription(answer);
+                        db.ref("calls/" + callId + "/answer").set(answer);
+                        CONSOLE.LOG('connected!')
+                    });
+                }
+            });
         }
-
-        // Enviar un mensaje a Dispositivo A
-        async function sendMessageToDevice(message) {
-            if (characteristicToSend) {
-                const encoder = new TextEncoder();
-                const encodedMessage = encoder.encode(message);
-                await characteristicToSend.writeValue(encodedMessage);
-                console.log("Enviado a Dispositivo A: ", message);
-            } else {
-                console.log("No hay conexión para enviar datos.");
-            }
-        }
-
-        // Manejar los datos recibidos desde Dispositivo A
-        function handleReceivedData(event) {
-            const value = event.target.value;
-            const decoder = new TextDecoder();
-            const decodedMessage = decoder.decode(value);
-            console.log("Recibido de Dispositivo A: ", decodedMessage);
-
-            // Responder a Dispositivo A
-            sendMessageToDevice("¡Hola desde el Dispositivo B!");
-        }
-
-        window.onclick = () => {
-            connectToBluetoothDevice();
-        }
-
     </script>
 </body>
 </html>
