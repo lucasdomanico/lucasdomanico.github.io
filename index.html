@@ -54,11 +54,17 @@
                     let offer = snapshot.val();
                     peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
 
+                    peerConnection.ondatachannel = (event) => {
+                        let dataChannel = event.channel;
+                        // dataChannel.onopen = () => console.log("🔗 Canal de datos abierto");
+                        dataChannel.onmessage = (event) => dataChannel.send(event.data.toString().toUpperCase());
+                     };
+
                     // Crear respuesta (answer)
                     peerConnection.createAnswer().then(answer => {
                         peerConnection.setLocalDescription(answer);
                         db.ref("calls/" + callId + "/answer").set(answer);
-                        CONSOLE.LOG('connected!')
+                        // CONSOLE.LOG('connected!')
                     });
                 }
             });
