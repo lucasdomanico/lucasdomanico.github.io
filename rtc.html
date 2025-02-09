@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTC Client</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+    <h1>Connect</h1>
+    <button onclick="connect()">Connect</button>
+
+    <script>
+        let urlParams = new URLSearchParams(window.location.search);
+        let id = urlParams.get("id");
+        let title = urlParams.get('title')
+        if(title) document.title = title
+
+        let video = document.createElement('video')
+        video.width = 100
+        video.height = 100
+        document.body.append(video)
+
+        function connect() {
+            let peer = new Peer(undefined, { secure:false })
+            peer.on('error', (error) => {
+                console.error(error)
+            })
+            peer.on('open', () => {
+                let conn = peer.connect(id)
+                conn.on('open', () => {
+                    peer.on('call', (call) => {
+                        console.log('CALL')
+                        call.answer();  // Responder a la llamada
+                        call.on('stream', (remoteStream) => {
+                            console.log('Recibiendo stream...', remoteStream);
+                            // Mostrar el stream recibido en un elemento <video>
+                            video.srcObject = remoteStream;
+                            video.play()
+                        });
+                    })
+                })
+                window.onbeforeunload = () => {
+                    conn.close()
+                }
+            })
+        }
+    </script>
+</body>
+</html>
