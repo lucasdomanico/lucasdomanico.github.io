@@ -7,21 +7,181 @@
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <h1>Connect</h1>
-    <button onclick="connect()">Connect</button>
+    <div id="home">
+        <h1>Connect</h1>
+        <button onclick="connect()">Connect</button>    
+    </div>
 
     <script>
+
+        let fitrect = (w, h, ow, oh) => {
+            let r = w / h
+            let or = ow / oh
+            let f = (r >= or)? ow / w : oh / h
+            return [w  * f, h * f]
+        }
+
+
         let urlParams = new URLSearchParams(window.location.search);
         let id = urlParams.get("id");
         let title = urlParams.get('title')
         if(title) document.title = title
 
+        document.body.style.display = 'flex'
+        document.body.style.justifyContent = 'center'
+        document.body.style.alignItems = 'center'
+        document.body.style.height = '100vh'
+        document.body.style.margin = '0'
+        document.body.style.backgroundColor = 'black'
+
         let video = document.createElement('video')
-        video.width = 100
-        video.height = 100
+        video.style.position = 'absolute'
+        video.style.display = 'none'
         document.body.append(video)
+        // console.log(video.videoWidth, video.videoHeight)
+
+
+
+
+
+
+
+
+
+
+        class Events { constructor(
+            keys,
+            ptrs,
+            clicks
+            ) {
+                this.keys = keys
+                this.ptrs = ptrs
+                this.clicks = clicks
+            }
+        }
+        class KeyEvent { constructor(
+            time,
+            mods,
+            action,
+            code,
+            key
+            ) {
+                this.time = time
+                this.mods = mods
+                this.action = action
+                this.code = code
+                this.key = key
+            }
+        }
+        class PtrEvent { constructor(
+            time,
+            mods,
+            action,
+            device,
+            id,
+            x,
+            y,
+            button,
+            buttons,
+            pressure
+            ) {
+                this.time = time
+                this.mods = mods
+                this.action = action
+                this.device = device
+                this.id = id
+                this.x = x
+                this.y = y
+                this.button = button
+                this.buttons = buttons
+                this.pressure = pressure
+            }
+        }
+        class ClickEvent { constructor(
+            time,
+            mods,
+            x,
+            y,
+            double
+            ) {
+                this.time = time
+                this.mods = mods
+                this.x = x
+                this.y = y
+                this.double = double
+            }
+        }
+        const key_event = (e, action) => {
+            return new KeyEvent(Date.now(), [], action, e.code, e.key)
+        }
+        const ptr_event = (e, action, view) => {
+            let device = e.pointerType
+            let id = e.pointerId
+            let bc = view.getBoundingClientRect()
+            let x = (e.x - bc.x) / bc.width
+            let y = (e.y - bc.y) / bc.height
+            return new PtrEvent(Date.now(), [], action, device, id, x, y, e.button, [], e.pressure)
+        }
+        const click_event = (e, double, view) => {
+            let bc = view.getBoundingClientRect()
+            let x = (e.x - bc.x) / bc.width
+            let y = (e.y - bc.y) / bc.height
+            return new ClickEvent(Date.now(), [], x, y, double)
+        }
+        const events = (win, doc, view) => {
+            let keysdown = new Map()
+            let keys = []
+            let ptrs = []
+            let clicks = []
+            win.addEventListener('keydown', (e) => {
+                if(keysdown.has(e.code)) return
+                keys.push(key_event(e, 'down'))
+                keysdown.set(e.code, true)
+            })
+            win.addEventListener('keyup', (e) => {
+                keys.push(key_event(e, 'up'))
+                keysdown.delete(e.code)
+            })
+            doc.addEventListener('pointerdown', (e) => ptrs.push(ptr_event(e, 'down', view)))
+            doc.addEventListener('pointerup',   (e) => ptrs.push(ptr_event(e, 'up', view)))
+            doc.addEventListener('pointermove', (e) => ptrs.push(ptr_event(e, 'move', view)))
+            doc.addEventListener('click',       (e) => clicks.push(click_event(e, false, view)))
+            doc.addEventListener('dblclick',    (e) => clicks.push(click_event(e, true, view)))
+            return () => {
+                let events = new Events(keys, ptrs, clicks)
+                keys = []
+                ptrs = []
+                clicks = []
+                return events
+            }
+        }
+
+
+        let get_events = events(window, document, video)
+
+
+
+
+
+
+
+
+
+
+
+
 
         function connect() {
+            let send = null
+            let loop = () => {
+                let es = get_events()
+                if(send !== null) {
+                    send(JSON.stringify(es))
+                }
+                requestAnimationFrame(loop)
+            }
+            loop()
+
             let peer = new Peer(undefined, { secure:false })
             peer.on('error', (error) => {
                 console.error(error)
@@ -29,13 +189,41 @@
             peer.on('open', () => {
                 let conn = peer.connect(id)
                 conn.on('open', () => {
+                    // conn.on('data', (data) => {
+                    //     // console.log('LOL', data)
+                    // })
+                    // setInterval(() => {
+                    //     conn.send({ msg:'lol' })
+                    // }, 1000)
+                    send = (data) => conn.send(data)
                     peer.on('call', (call) => {
-                        console.log('CALL')
                         call.answer();  // Responder a la llamada
                         call.on('stream', (remoteStream) => {
-                            console.log('Recibiendo stream...', remoteStream);
-                            // Mostrar el stream recibido en un elemento <video>
+                            // let s = remoteStream.getVideoTracks()[0].getSettings()
+                            // // let w = s.width
+                            // // let h = s.height
+
+                            // // console.log(w, h, s, s.width, s.height)
+
+                            document.getElementById('home').style.display = 'none'
+                            video.style.display = ''
+
                             video.srcObject = remoteStream;
+                            video.onloadedmetadata = () => {
+                                // console.log(`Resolución real: ${video.videoWidth}x${video.videoHeight}`);
+                                let resize = () => {
+                                    let w = video.videoWidth
+                                    let h = video.videoHeight
+                                    let [a, b] = fitrect(w, h, window.innerWidth, window.innerHeight)
+                                    // console.log(w, h, window.innerWidth, window.innerHeight, a, b)
+                                    video.style.width = a + 'px'
+                                    video.style.height = b + 'px'
+                                    // video.width = 1000
+                                    // video.height = 1000
+                                }
+                                window.onresize = resize
+                                resize()
+                            }
                             video.play()
                         });
                     })
