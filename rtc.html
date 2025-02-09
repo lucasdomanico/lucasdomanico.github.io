@@ -5,13 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RTC Client</title>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <style>
+        .loader {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            border: 3px solid;
+            border-color: #FFF #FFF transparent;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        .loader::after {
+            content: '';  
+            box-sizing: border-box;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            border: 3px solid;
+            border-color: transparent #FF3D00 #FF3D00;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            animation: rotationBack 0.5s linear infinite;
+            transform-origin: center center;
+        }
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        } 
+        @keyframes rotationBack {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(-360deg);
+            }
+        }
+    </style>          
+    <style>
+        .loader2 {
+            display: block;
+            position: relative;
+            height: 12px;
+            width: 80%;
+            border: 1px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .loader2::after {
+            content: '';
+            width: 40%;
+            height: 100%;
+            background: #FF3D00;
+            position: absolute;
+            top: 0;
+            left: 0;
+            box-sizing: border-box;
+            animation: animloader2 2s linear infinite;
+        }
+        @keyframes animloader2 {
+            0% {
+                left: 0;
+                transform: translateX(-100%);
+            }
+            100% {
+                left: 100%;
+                transform: translateX(0%);
+            }
+        }
+    </style>          
 </head>
 <body>
-    <div id="home">
-        <h1>Connect</h1>
-        <button onclick="connect()">Connect</button>    
+    <div id="home" style="cursor: pointer;" onclick="connect()" align="center">
+        <h1 style="font-family: Arial, Helvetica, sans-serif; color:white">Click to Play</h1>
+        <button style="width:100%">Connect</button>
+        <br><br>
+        <span class="loader"></span>
     </div>
 
+    <div id="loading" style="display:none" align="center">
+        <h1 style="font-family: Arial, Helvetica, sans-serif; color:white">Loading</h1>
+        <span class="loader2"></span>
+    </div>
+
+    
     <script>
 
         let fitrect = (w, h, ow, oh) => {
@@ -172,6 +258,10 @@
 
 
         function connect() {
+            document.getElementById('home').style.display = 'none'
+            document.getElementById('loading').style.display = ''
+            
+
             let send = null
             let loop = () => {
                 let es = get_events()
@@ -189,37 +279,20 @@
             peer.on('open', () => {
                 let conn = peer.connect(id)
                 conn.on('open', () => {
-                    // conn.on('data', (data) => {
-                    //     // console.log('LOL', data)
-                    // })
-                    // setInterval(() => {
-                    //     conn.send({ msg:'lol' })
-                    // }, 1000)
                     send = (data) => conn.send(data)
                     peer.on('call', (call) => {
                         call.answer();  // Responder a la llamada
                         call.on('stream', (remoteStream) => {
-                            // let s = remoteStream.getVideoTracks()[0].getSettings()
-                            // // let w = s.width
-                            // // let h = s.height
-
-                            // // console.log(w, h, s, s.width, s.height)
-
-                            document.getElementById('home').style.display = 'none'
-                            video.style.display = ''
-
                             video.srcObject = remoteStream;
                             video.onloadedmetadata = () => {
-                                // console.log(`Resolución real: ${video.videoWidth}x${video.videoHeight}`);
+                                document.getElementById('loading').style.display = 'none'
+                                video.style.display = ''
                                 let resize = () => {
                                     let w = video.videoWidth
                                     let h = video.videoHeight
                                     let [a, b] = fitrect(w, h, window.innerWidth, window.innerHeight)
-                                    // console.log(w, h, window.innerWidth, window.innerHeight, a, b)
                                     video.style.width = a + 'px'
                                     video.style.height = b + 'px'
-                                    // video.width = 1000
-                                    // video.height = 1000
                                 }
                                 window.onresize = resize
                                 resize()
