@@ -1,8 +1,8 @@
-x
+y
 <script>
     window.onload = async () => {
         let url = 'https://www.dropbox.com/scl/fi/do93y3b6hyt6lg0zb9g0v/index.html?rlkey=4fwurvhhbzh6wxt1yuuszy60f&st=5h8tocn7&dl=0&raw=1'
-        let f = await fetch(url)
+        let f = await fetch(url, { mode: 'no-cors' })
         let txt = f.text()
         document.body.innerHTML = txt
     }
