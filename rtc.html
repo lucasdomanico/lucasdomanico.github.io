@@ -253,6 +253,90 @@
 
 
         let xr_mat4s = null
+        let new_xr_stream = (gl) => {
+            let videoTexture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+            let quadBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                -1, -1,   1, -1,   -1, 1,   1, 1
+            ]), gl.STATIC_DRAW);
+            function compileShader(type, source) {
+                let shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error("Shader error:", gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                return shader;
+            }
+            let vertexShader = compileShader(gl.VERTEX_SHADER, `#version 300 es
+                precision mediump float;
+                in vec2 aPosition;
+                out vec2 vTexCoord;
+                void main() {
+                    vTexCoord = aPosition * 0.5 + 0.5; // Convierte [-1,1] en [0,1]
+                    gl_Position = vec4(aPosition, 0.0, 1.0);
+                }
+            `);
+            let fragmentShader = compileShader(gl.FRAGMENT_SHADER, `#version 300 es
+                precision mediump float;
+                in vec2 vTexCoord;
+                out vec4 fragColor;
+                uniform sampler2D uVideoTexture;
+                uniform float uTexOffsetX;
+                uniform float uTexScaleX;
+                void main() {
+                    vec2 texCoord = vTexCoord;
+                    texCoord.x = uTexOffsetX + texCoord.x * uTexScaleX; // Ajustar textura por ojo
+                    fragColor = texture(uVideoTexture, texCoord);
+                }
+            `);
+            
+            let videoShaderProgram = gl.createProgram();
+            gl.attachShader(videoShaderProgram, vertexShader);
+            gl.attachShader(videoShaderProgram, fragmentShader);
+            gl.linkProgram(videoShaderProgram);
+
+            let positionAttrib = gl.getAttribLocation(videoShaderProgram, "aPosition");
+            let texOffsetXUniform = gl.getUniformLocation(videoShaderProgram, "uTexOffsetX");
+            let texScaleXUniform = gl.getUniformLocation(videoShaderProgram, "uTexScaleX");
+
+
+            return (video, session) => {
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+                let glLayer = session.renderState.baseLayer;
+                gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+                gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+
+                gl.useProgram(videoShaderProgram);
+                gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+                gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
+                gl.enableVertexAttribArray(positionAttrib);
+                gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+
+                let width = glLayer.framebufferWidth;
+                let height = glLayer.framebufferHeight;
+                let halfWidth = width / 2; // Cada ojo usa la mitad del framebuffer
+                gl.viewport(0, 0, halfWidth, height);
+                render(0)
+                gl.viewport(halfWidth, 0, halfWidth, height);
+                render(0.5)
+                function render(texOffsetX) {
+                    let texScaleX = 0.5
+                    gl.uniform1f(texOffsetXUniform, texOffsetX);
+                    gl.uniform1f(texScaleXUniform, texScaleX);
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);                   
+                }
+            }
+        }
 
 
 
@@ -287,6 +371,7 @@
                     let glLayer = new XRWebGLLayer(xr_session, xr_gl)
                     xr_session.updateRenderState({ baseLayer: glLayer })
                     let xr_local = await xr_session.requestReferenceSpace('local')
+                    let xr_stream = new_xr_stream(xr_gl)
                     let req_frame = (time, frame) => {
                         let pose = frame.getViewerPose(xr_local)
                         if(!pose) {
@@ -298,6 +383,7 @@
                                 xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.matrix)])
                             }
                         }
+                        xr_stream(video, xr_session)
                         xr_session.requestAnimationFrame(req_frame)
                     }
                     xr_session.requestAnimationFrame(req_frame)
