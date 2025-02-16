@@ -293,6 +293,7 @@
                             xr_mat4s = null
                         }
                         else {
+                            xr_mat4s = []
                             for(let v of pose.views) {
                                 xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.inverse.matrix)])
                             }
