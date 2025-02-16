@@ -289,14 +289,18 @@
                             xr_mat4s = null
                             return
                         }
-                        if(pose.views !== 2) {
-                            xr_mat4s = null
-                            return
+                        // if(pose.views !== 2) {
+                        //     xr_mat4s = null
+                        //     return
+                        // }
+                        xr_mat4s = []
+                        for(let v of pose.views) {
+                            xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.inverse.matrix)])
                         }
-                        xr_mat4s = [
-                            [Array.from(pose.views[0].projectionMatrix), Array.from(pose.views[0].transform.inverse.matrix)],
-                            [Array.from(pose.views[1].projectionMatrix), Array.from(pose.views[1].transform.inverse.matrix)],
-                        ]
+                        // xr_mat4s = [
+                        //     [Array.from(pose.views[0].projectionMatrix), Array.from(pose.views[0].transform.inverse.matrix)],
+                        //     [Array.from(pose.views[1].projectionMatrix), Array.from(pose.views[1].transform.inverse.matrix)],
+                        // ]
                         xr_session.requestAnimationFrame(req_frame)
                     }
                     xr_session.requestAnimationFrame(req_frame)
