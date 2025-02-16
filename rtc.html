@@ -252,12 +252,14 @@
 
 
 
+        let xr_mat4s = null
 
 
 
 
 
-        function connect() {
+
+        async function connect() {
             document.getElementById('home').style.display = 'none'
             document.getElementById('loading').style.display = ''
             
@@ -266,11 +268,45 @@
             let loop = () => {
                 let es = get_events()
                 if(send !== null) {
+                    es.xr_mat4s = xr_mat4s
                     send(JSON.stringify(es))
                 }
                 requestAnimationFrame(loop)
             }
             loop()
+
+
+
+            // XR
+            let xr_support = navigator.xr && (await navigator.xr.isSessionSupported('immersive-vr'))
+            if(xr_support) {
+                try {
+                    let xr_session = await navigator.xr.requestSession('immersive-vr')
+                    let xr_local = await xr_session.requestReferenceSpace('local')
+                    let req_frame = (time, frame) => {
+                        let pose = frame.getViewerPose(xr_local)
+                        if(!pose) {
+                            xr_mat4s = null
+                            return
+                        }
+                        if(pose.views !== 2) {
+                            xr_mat4s = null
+                            return
+                        }
+                        xr_mat4s = [
+                            [Array.from(pose.views[0].projectionMatrix), Array.from(pose.views[0].transform.inverse.matrix)],
+                            [Array.from(pose.views[1].projectionMatrix), Array.from(pose.views[1].transform.inverse.matrix)],
+                        ]
+                        xr_session.requestAnimationFrame(req_frame)
+                    }
+                    xr_session.requestAnimationFrame(req_frame)
+                }
+                catch(e) {
+                    console.error(e.toString())
+                }
+            }
+
+
 
             let peer = new Peer(undefined, { secure:false })
             peer.on('error', (error) => {
@@ -280,6 +316,7 @@
                 let conn = peer.connect(id)
                 conn.on('open', () => {
                     send = (data) => conn.send(data)
+                    send(JSON.stringify({ login:true, xr:xr_support }))
                     peer.on('call', (call) => {
                         call.answer();  // Responder a la llamada
                         call.on('stream', (remoteStream) => {
