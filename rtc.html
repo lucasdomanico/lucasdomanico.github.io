@@ -309,7 +309,7 @@
             let texScaleXUniform = gl.getUniformLocation(videoShaderProgram, "uTexScaleX");
 
 
-            return (video, framebuffer) => {
+            return (video, framebuffer, viewports) => {
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
                 gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
@@ -325,14 +325,22 @@
                 gl.enableVertexAttribArray(positionAttrib);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
 
-                let width = gl.drawingBufferWidth + 500;
-                let height = gl.drawingBufferHeight + 500;
-                if(send !== null) send(JSON.stringify({ log:true, text:width + ' ' + height }))
-                let halfWidth = width / 2; // Cada ojo usa la mitad del framebuffer
-                gl.viewport(0, 0, halfWidth, height);
+                // let width = gl.drawingBufferWidth + 500;
+                // let height = gl.drawingBufferHeight + 500;
+                // if(send !== null) send(JSON.stringify({ log:true, text:width + ' ' + height }))
+                // let halfWidth = width / 2; // Cada ojo usa la mitad del framebuffer
+                // gl.viewport(0, 0, halfWidth, height);
+                // render(0)
+                // gl.viewport(halfWidth, 0, halfWidth, height);
+                // render(0.5)
+
+                let L = viewports[0]
+                gl.viewport(L.x, L.y, L.width, L.height);
                 render(0)
-                gl.viewport(halfWidth, 0, halfWidth, height);
+                let R = viewports[1]
+                gl.viewport(R.x, R.y, R.width, R.height);
                 render(0.5)
+
                 function render(texOffsetX) {
                     let texScaleX = 0.5
                     gl.uniform1f(texOffsetXUniform, texOffsetX);
@@ -374,6 +382,7 @@
                     xr_session.updateRenderState({ baseLayer: glLayer })
                     let xr_local = await xr_session.requestReferenceSpace('local')
                     let xr_stream = new_xr_stream(xr_gl)
+                    let xr_viewports = null
                     let req_frame = (time, frame) => {
                         let pose = frame.getViewerPose(xr_local)
                         if(!pose) {
@@ -384,9 +393,13 @@
                             for(let v of pose.views) {
                                 xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.matrix)])
                             }
+                            xr_viewports = []
+                            for(let v of pose.views) {
+                                xr_viewports.push(glLayer.getViewport(v))
+                            }
                         }
-                        if(video_started) {
-                            xr_stream(video, xr_session.renderState.baseLayer.framebuffer)
+                        if(video_started && xr_viewports !== null) {
+                            xr_stream(video, xr_session.renderState.baseLayer.framebuffer, xr_viewports)
                         }
                         xr_session.requestAnimationFrame(req_frame)
                     }
