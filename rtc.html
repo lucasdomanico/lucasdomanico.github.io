@@ -295,6 +295,7 @@
                 void main() {
                     vec2 texCoord = vTexCoord;
                     texCoord.x = uTexOffsetX + texCoord.x * uTexScaleX; // Ajustar textura por ojo
+                    texCoord.y = 1. - texCoord.y;
                     fragColor = texture(uVideoTexture, texCoord);
                 }
             `);
