@@ -85,9 +85,9 @@
     </style>          
 </head>
 <body>
-    <div id="home" style="cursor: pointer; margin-top:-5%" align="center">
+    <div id="home" style="cursor: pointer; margin-top:-5%" onclick="connect()" align="center">
         <h1 style="font-family: Arial, Helvetica, sans-serif; color:white">Click to Play</h1>
-        <button style="width:100%" onclick="connect()">Connect</button>
+        <button style="width:100%">Connect</button>
         <br><br>
         <span class="loader"></span>
     </div>
@@ -310,7 +310,7 @@
 
 
             return (video, framebuffer, viewports) => {
-                gl.clearColor(0, 0, 0, 1)
+                // gl.clearColor(0, 0, 0, 1)
                 gl.clear(gl.COLOR_BUFFER_BIT)
                 gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
@@ -387,7 +387,7 @@
                     let xr_gl = xr_canvas.getContext('webgl2', { xrCompatible:true })
                     let glLayer = new XRWebGLLayer(xr_session, xr_gl)
                     xr_session.updateRenderState({ baseLayer: glLayer })
-                    let xr_local = await xr_session.requestReferenceSpace('local')
+                    let xr_local = await xr_session.requestReferenceSpace('viewer')
                     let xr_stream = new_xr_stream(xr_gl)
                     let xr_viewports = null
                     let req_frame = (time, frame) => {
