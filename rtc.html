@@ -319,11 +319,12 @@
                 // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
 
 
-                gl.useProgram(videoShaderProgram);
-                gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
-                gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
-                gl.enableVertexAttribArray(positionAttrib);
-                gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+                // gl.useProgram(videoShaderProgram);
+                // gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+                // gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
+                // gl.enableVertexAttribArray(positionAttrib);
+                // gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+
 
                 // let width = gl.drawingBufferWidth + 500;
                 // let height = gl.drawingBufferHeight + 500;
@@ -343,6 +344,11 @@
 
                 function render(texOffsetX) {
                     let texScaleX = 0.5
+                    gl.useProgram(videoShaderProgram);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+                    gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
+                    gl.enableVertexAttribArray(positionAttrib);
+                    gl.bindTexture(gl.TEXTURE_2D, videoTexture);
                     gl.uniform1f(texOffsetXUniform, texOffsetX);
                     gl.uniform1f(texScaleXUniform, texScaleX);
                     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);                   
