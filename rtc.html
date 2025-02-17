@@ -295,6 +295,7 @@
                     vec2 texCoord = vTexCoord;
                     texCoord.x = uTexOffsetX + texCoord.x * uTexScaleX; // Ajustar textura por ojo
                     fragColor = texture(uVideoTexture, texCoord);
+                    fragColor = vec4(1, 1, 0, 1);
                 }
             `);
             
@@ -313,9 +314,9 @@
                 gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
                 // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
-                // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, video.videoWidth, video.videoHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, video.videoWidth, video.videoHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
+                // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
 
 
                 gl.useProgram(videoShaderProgram);
