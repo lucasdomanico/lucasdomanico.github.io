@@ -251,8 +251,6 @@
 
 
 
-
-        let xr_mat4s = null
         let new_xr_stream = (gl) => {
             let videoTexture = gl.createTexture();
             gl.bindTexture(gl.TEXTURE_2D, videoTexture);
@@ -309,10 +307,9 @@
             let texScaleXUniform = gl.getUniformLocation(videoShaderProgram, "uTexScaleX");
 
 
-            return (video, session) => {
+            return (video, framebuffer) => {
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-                let glLayer = session.renderState.baseLayer;
-                gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
 
@@ -322,8 +319,8 @@
                 gl.enableVertexAttribArray(positionAttrib);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
 
-                let width = glLayer.framebufferWidth;
-                let height = glLayer.framebufferHeight;
+                let width = gl.drawingBufferWidth;
+                let height = gl.drawingBufferHeight;
                 let halfWidth = width / 2; // Cada ojo usa la mitad del framebuffer
                 gl.viewport(0, 0, halfWidth, height);
                 render(0)
@@ -339,6 +336,17 @@
         }
 
 
+        // let glc = document.createElement('canvas')
+        // let gl = glc.getContext('webgl2', { xrCompatible:true })
+        // let sync = new_xr_stream(gl)
+
+        // let c = document.createElement('canvas')
+        // let x = c.getContext('2d')
+        // x.fillStyle = 'red'
+        // x.fillRect(0, 0, c.width, c.height)
+        // sync(c, null)
+
+        // document.body.append(glc);
 
 
 
@@ -346,22 +354,9 @@
         async function connect() {
             document.getElementById('home').style.display = 'none'
             document.getElementById('loading').style.display = ''
-            
-
-            let send = null
-            let loop = () => {
-                let es = get_events()
-                if(send !== null) {
-                    es.xr_mat4s = xr_mat4s
-                    send(JSON.stringify(es))
-                }
-                requestAnimationFrame(loop)
-            }
-            loop()
-
-
 
             // XR
+            let xr_mat4s = null
             let xr_support = navigator.xr && (await navigator.xr.isSessionSupported('immersive-vr'))
             if(xr_support) {
                 try {
@@ -383,7 +378,7 @@
                                 xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.matrix)])
                             }
                         }
-                        xr_stream(video, xr_session)
+                        xr_stream(video, xr_session.renderState.baseLayer.framebuffer)
                         xr_session.requestAnimationFrame(req_frame)
                     }
                     xr_session.requestAnimationFrame(req_frame)
@@ -393,7 +388,16 @@
                 }
             }
 
-
+            let send = null
+            let loop = () => {
+                let es = get_events()
+                if(send !== null) {
+                    es.xr_mat4s = xr_mat4s
+                    send(JSON.stringify(es))
+                }
+                requestAnimationFrame(loop)
+            }
+            loop()
 
             let peer = new Peer(undefined, { secure:false })
             peer.on('error', (error) => {
