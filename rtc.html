@@ -328,7 +328,7 @@
 
                 let width = gl.drawingBufferWidth;
                 let height = gl.drawingBufferHeight;
-                if(send !== null) send({ log:true, text:width + ' ' + height })
+                if(send !== null) send(JSON.stringify({ log:true, text:width + ' ' + height }))
                 let halfWidth = width / 2; // Cada ojo usa la mitad del framebuffer
                 gl.viewport(0, 0, halfWidth, height);
                 render(0)
