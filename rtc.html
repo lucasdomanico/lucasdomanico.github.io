@@ -337,10 +337,10 @@
                 // render(0.5)
 
                 let L = viewports[0]
-                gl.viewport(L.x, L.y, L.width, L.height);
+                gl.viewport(L[0], L[1], L[2], L[3]);
                 render(0)
                 let R = viewports[1]
-                gl.viewport(R.x, R.y, R.width, R.height);
+                gl.viewport(R[0], R[1], R[2], R[3]);
                 render(0.5)
 
                 function render(texOffsetX) {
@@ -404,7 +404,8 @@
                             }
                             xr_viewports = []
                             for(let v of pose.views) {
-                                xr_viewports.push(xr_session.renderState.baseLayer.getViewport(v))
+                                let p = xr_session.renderState.baseLayer.getViewport(v)
+                                xr_viewports.push([p.x, p.y, p.width, p.height])
                             }
                         }
                         if(video_started && xr_viewports !== null) {
