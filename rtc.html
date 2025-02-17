@@ -121,9 +121,9 @@
         document.body.style.backgroundColor = 'black'
 
         let video = document.createElement('video')
-        video.style.position = 'absolute'
-        video.style.display = 'none'
-        document.body.append(video)
+        // video.style.position = 'absolute'
+        // video.style.display = 'none'
+        // document.body.append(video)
         let video_started = false
         // console.log(video.videoWidth, video.videoHeight)
 
@@ -312,10 +312,6 @@
             return (video, framebuffer, viewports) => {
                 // gl.clearColor(0, 0, 0, 1)
                 gl.clear(gl.COLOR_BUFFER_BIT)
-                gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-                gl.bindTexture(gl.TEXTURE_2D, videoTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
-                // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, video.videoWidth, video.videoHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
 
                 // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
 
@@ -344,6 +340,14 @@
                 render(0.5)
 
                 function render(texOffsetX) {
+
+
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+                    gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+                    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, video.videoWidth, video.videoHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
+
+
                     let texScaleX = 0.5
                     gl.useProgram(videoShaderProgram);
                     gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
