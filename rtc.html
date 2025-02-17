@@ -389,7 +389,7 @@
                     let xr_session = await navigator.xr.requestSession('immersive-vr')
                     let xr_canvas = document.createElement('canvas')
                     let xr_gl = xr_canvas.getContext('webgl2', { xrCompatible:true, depth:false, alpha:false })
-                    let xr_local = await xr_session.requestReferenceSpace('local')
+                    let xr_local = await xr_session.requestReferenceSpace('local-floor')
 
                     let glLayer = new XRWebGLLayer(xr_session, xr_gl)
                     xr_session.updateRenderState({ baseLayer: glLayer })
@@ -419,7 +419,9 @@
                         }
                         xr_session.requestAnimationFrame(req_frame)
                     }
-                    xr_session.requestAnimationFrame(req_frame)
+                    setTimeout(() => {
+                        xr_session.requestAnimationFrame(req_frame)
+                    }, 2000)
                 }
                 catch(e) {
                     alert(e.toString())
