@@ -384,7 +384,7 @@
                 try {
                     let xr_session = await navigator.xr.requestSession('immersive-vr')
                     let xr_canvas = document.createElement('canvas')
-                    let xr_gl = xr_canvas.getContext('webgl2', { xrCompatible:true })
+                    let xr_gl = xr_canvas.getContext('webgl', { xrCompatible:true })
                     let glLayer = new XRWebGLLayer(xr_session, xr_gl)
                     xr_session.updateRenderState({ baseLayer: glLayer })
                     let xr_local = await xr_session.requestReferenceSpace('local')
