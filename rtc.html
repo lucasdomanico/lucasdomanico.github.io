@@ -372,48 +372,45 @@
 
 
 
-        function connect() {
+        async function connect() {
             document.getElementById('home').style.display = 'none'
             document.getElementById('loading').style.display = ''
 
             // XR
             let xr_mat4s = null
-            // let xr_support = navigator.xr && (await navigator.xr.isSessionSupported('immersive-vr'))
-            let xr_support = true
+            let xr_support = navigator.xr && (await navigator.xr.isSessionSupported('immersive-vr'))
             if(xr_support) {
                 try {
-                    navigator.xr.requestSession('immersive-vr').then((xr_session) => {
-                        let xr_canvas = document.createElement('canvas')
-                        let xr_gl = xr_canvas.getContext('webgl2', { xrCompatible:true })
-                        let glLayer = new XRWebGLLayer(xr_session, xr_gl)
-                        xr_session.updateRenderState({ baseLayer: glLayer })
-                        xr_session.requestReferenceSpace('local').then((xr_local) => {
-                            let xr_stream = new_xr_stream(xr_gl)
-                            let xr_viewports = null
-                            let req_frame = (time, frame) => {
-                                let pose = frame.getViewerPose(xr_local)
-                                if(!pose) {
-                                    // xr_mat4s = null
-                                }
-                                else {
-                                    xr_mat4s = []
-                                    for(let v of pose.views) {
-                                        xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.inverse.matrix)])
-                                        // xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.matrix)])
-                                    }
-                                    xr_viewports = []
-                                    for(let v of pose.views) {
-                                        xr_viewports.push(glLayer.getViewport(v))
-                                    }
-                                }
-                                if(video_started && xr_viewports !== null) {
-                                    xr_stream(video, xr_session.renderState.baseLayer.framebuffer, xr_viewports)
-                                }
-                                xr_session.requestAnimationFrame(req_frame)
+                    let xr_session = await navigator.xr.requestSession('immersive-vr')
+                    let xr_canvas = document.createElement('canvas')
+                    let xr_gl = xr_canvas.getContext('webgl2', { xrCompatible:true })
+                    let glLayer = new XRWebGLLayer(xr_session, xr_gl)
+                    xr_session.updateRenderState({ baseLayer: glLayer })
+                    let xr_local = await xr_session.requestReferenceSpace('local')
+                    let xr_stream = new_xr_stream(xr_gl)
+                    let xr_viewports = null
+                    let req_frame = (time, frame) => {
+                        let pose = frame.getViewerPose(xr_local)
+                        if(!pose) {
+                            // xr_mat4s = null
+                        }
+                        else {
+                            xr_mat4s = []
+                            for(let v of pose.views) {
+                                xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.inverse.matrix)])
+                                // xr_mat4s.push([Array.from(v.projectionMatrix), Array.from(v.transform.matrix)])
                             }
-                            xr_session.requestAnimationFrame(req_frame)
-                        })
-                    })
+                            xr_viewports = []
+                            for(let v of pose.views) {
+                                xr_viewports.push(xr_session.renderState.baseLayer.getViewport(v))
+                            }
+                        }
+                        if(video_started && xr_viewports !== null) {
+                            xr_stream(video, xr_session.renderState.baseLayer.framebuffer, xr_viewports)
+                        }
+                        xr_session.requestAnimationFrame(req_frame)
+                    }
+                    xr_session.requestAnimationFrame(req_frame)
                 }
                 catch(e) {
                     alert(e.toString())
