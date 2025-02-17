@@ -391,7 +391,7 @@
                     let xr_gl = xr_canvas.getContext('webgl2', { xrCompatible:true, depth:false, alpha:false })
                     let glLayer = new XRWebGLLayer(xr_session, xr_gl)
                     xr_session.updateRenderState({ baseLayer: glLayer })
-                    let xr_local = await xr_session.requestReferenceSpace('local')
+                    let xr_local = await xr_session.requestReferenceSpace('viewer')
                     let xr_stream = new_xr_stream(xr_gl)
                     let xr_viewports = null
                     let req_frame = (time, frame) => {
