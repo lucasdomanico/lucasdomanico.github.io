@@ -326,8 +326,8 @@
                 gl.enableVertexAttribArray(positionAttrib);
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
 
-                let width = gl.drawingBufferWidth;
-                let height = gl.drawingBufferHeight;
+                let width = gl.drawingBufferWidth + 500;
+                let height = gl.drawingBufferHeight + 500;
                 if(send !== null) send(JSON.stringify({ log:true, text:width + ' ' + height }))
                 let halfWidth = width / 2; // Cada ojo usa la mitad del framebuffer
                 gl.viewport(0, 0, halfWidth, height);
