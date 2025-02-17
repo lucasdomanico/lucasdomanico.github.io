@@ -397,6 +397,14 @@
                     let xr_stream = new_xr_stream(xr_gl)
                     let xr_viewports = null
                     let req_frame = (time, frame) => {
+
+                        let es = get_events()
+                        if(send !== null) {
+                            es.xr_mat4s = xr_mat4s
+                            send(JSON.stringify(es))
+                        }
+
+
                         xr_session = frame.session
                         let pose = frame.getViewerPose(xr_local)
                         if(!pose) {
@@ -430,12 +438,12 @@
 
             // let send = null
             let loop = () => {
-                let es = get_events()
-                if(send !== null) {
-                    es.xr_mat4s = xr_mat4s
-                    send(JSON.stringify(es))
-                }
-                requestAnimationFrame(loop)
+                // let es = get_events()
+                // if(send !== null) {
+                //     es.xr_mat4s = xr_mat4s
+                //     send(JSON.stringify(es))
+                // }
+                // requestAnimationFrame(loop)
             }
             loop()
 
