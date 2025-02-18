@@ -449,7 +449,7 @@
             }
             loop()
 
-            let peer = new Peer(undefined, { secure:false })
+            let peer = new Peer(undefined, { secure:false, reliable:false })
             peer.on('error', (error) => {
                 console.error(error)
             })
