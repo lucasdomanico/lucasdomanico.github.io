@@ -309,6 +309,11 @@
             let texOffsetXUniform = gl.getUniformLocation(videoShaderProgram, "uTexOffsetX");
             let texScaleXUniform = gl.getUniformLocation(videoShaderProgram, "uTexScaleX");
 
+            gl.useProgram(videoShaderProgram);
+            gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+            gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(positionAttrib);
+            gl.bindTexture(gl.TEXTURE_2D, videoTexture);
 
             return (video, framebuffer, viewports) => {
                 // gl.clearColor(0, 0, 0, 1)
@@ -319,11 +324,11 @@
                 gl.bindTexture(gl.TEXTURE_2D, videoTexture);
                 // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, video.videoWidth, video.videoHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
-                gl.useProgram(videoShaderProgram);
-                gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
-                gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
-                gl.enableVertexAttribArray(positionAttrib);
-                gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+                // gl.useProgram(videoShaderProgram);
+                // gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+                // gl.vertexAttribPointer(positionAttrib, 2, gl.FLOAT, false, 0, 0);
+                // gl.enableVertexAttribArray(positionAttrib);
+                // gl.bindTexture(gl.TEXTURE_2D, videoTexture);
 
 
                 // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
@@ -428,9 +433,9 @@
                         }
                         xr_session.requestAnimationFrame(req_frame)
                     }
-                    setTimeout(() => {
-                        xr_session.requestAnimationFrame(req_frame)
-                    }, 2000)
+                    // setTimeout(() => {
+                    xr_session.requestAnimationFrame(req_frame)
+                    // }, 2000)
                 }
                 catch(e) {
                     alert(e.toString())
